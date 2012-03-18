@@ -70,7 +70,7 @@ class Plottr:
             func(None)
 
 
-    def process_data(self, vals):
+    def process_data_3d(self, vals):
         if not vals:
             self.out("\n")
             return
@@ -87,17 +87,53 @@ class Plottr:
         self.out("%s %s %s\n" % (x, y, z))
 
 
+
+    def process_data_2d(self, vals):
+        if not vals: return
+
+        x = vals["dir_name"].split("-")[1]
+        y = vals["subdir_name"].split("-")[1]
+        z = vals["datum"]
+
+        # remember label string
+        self.x_label = vals["dir_name"].split("-")[0]
+        self.y_label = vals["subdir_name"].split("-")[0]
+        self.z_label = self.args.dataname
+
+        self.out("%s %s %s\n" % (x, y, z))
+
+
+    def process_data(self, vals):
+        if self.args.mode == '2d':
+            self.process_data_2d(vals)
+        else:
+            self.process_data_3d(vals)
+
     def run(self):
         self.cmd_parser()
         self.get_data(self.process_data)
         self.create_gnuplot_template("result.gpi")
         return 0
 
+    def die(self, msg="error occured\n"):
+        sys.stderr.write(msg)
+        sys.exit(1)
+
 
     def cmd_parser(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--data-name', dest='dataname', default=None, required=False)
+        parser.add_argument('--mode', dest='mode', default='3d', required=False)
+        parser.add_argument('--x-axis', dest='x_axis', default=None, type=str, required=False)
         self.args = parser.parse_args()
+
+        if self.args.mode != "3d":
+            if self.args.mode != '2d':
+                self.die("only 2d and 3d suppored\n")
+
+            if not self.args.x_axis:
+                self.die("2d mode require a --x-axis argument\n")
+
 
 
     def create_gnuplot_template(self, filename):
